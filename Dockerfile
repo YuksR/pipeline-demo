@@ -1,28 +1,27 @@
-#Base Image node:18.17.1-alpine
+# Base Image node:18.17.1-alpine
 FROM node:18.17.1-alpine
 
+# Install jq
+RUN apk add --no-cache jq
 
-#Set working directory to /app
+# Set working directory to /app
 WORKDIR /app
 
-
-#Set PATH /app/node_modules/.bin
+# Set PATH /app/node_modules/.bin
 ENV PATH /app/node_modules/.bin:$PATH
 
+# Copy package.json and package-lock.json in the image
+COPY package.json package-lock.json ./
 
-#Copy package.json in the image
-COPY package.json ./
-
-
-#Run npm install command
+# Run npm install command
 RUN npm install
 
-
-#Copy the app
+# Copy the app
 COPY . ./
 
-#Expose port 3000
+# Expose port 3000
 EXPOSE 3000
 
-#Start the app
-CMD ["node", "./src/server.js"]
+# Start the app
+CMD ["npm", "start"]
+
