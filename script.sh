@@ -16,8 +16,12 @@ ROLE_ARN=$(echo $task_definition | jq -r '.taskDefinition.executionRoleArn')
 FAMILY=$(echo $task_definition | jq -r '.taskDefinition.family')
 CONTAINER_NAME=$(echo $task_definition | jq -r '.taskDefinition.containerDefinitions[0].name')
 
+echo "Extracted Family: $FAMILY"
+echo "Extracted Container Name: $CONTAINER_NAME"
+echo "Extracted Role ARN: $ROLE_ARN"
+
 # Register new task definition
-aws ecs register-task-definition \
+new_task_definition=$(aws ecs register-task-definition \
     --family $FAMILY \
     --container-definitions "[{
         \"name\": \"$CONTAINER_NAME\",
@@ -32,20 +36,21 @@ aws ecs register-task-definition \
     --memory "1024" \
     --network-mode "bridge" \
     --execution-role-arn $ROLE_ARN \
-    --requires-compatibilities "EC2"
+    --requires-compatibilities "EC2")
 
-# Get the new task definition revision
-REVISION=$(aws ecs describe-task-definition --task-definition $FAMILY | jq -r '.taskDefinition.revision')
+# Extract new task definition revision
+NEW_REVISION=$(echo $new_task_definition | jq -r '.taskDefinition.revision')
 
-echo "New Task Definition Revision: $REVISION"
+echo "New Task Definition Revision: $NEW_REVISION"
 
 # Update service to use the new task definition revision
 aws ecs update-service \
     --cluster $CLUSTER_NAME \
     --service $SERVICE_NAME \
-    --task-definition "$FAMILY:$REVISION" \
+    --task-definition "$FAMILY:$NEW_REVISION" \
     --desired-count $DESIRED_COUNT
 
-echo "Service updated to use task definition $FAMILY:$REVISION"
+echo "Service updated to use task definition $FAMILY:$NEW_REVISION"
+
  
 }
