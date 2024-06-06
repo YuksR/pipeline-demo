@@ -41,6 +41,16 @@ pipeline {
         }
       }
      }
+    stage('Fetch Task Definition Family') {
+        steps {
+                script {
+                    def task_definition = sh(script: "aws ecs describe-task-definition --task-definition ${TASK_DEFINITION_NAME}", returnStdout: true).trim()
+                    def family_name = sh(script: "echo '${task_definition}' | jq -r '.taskDefinition.family'", returnStdout: true).trim()
+                    echo "Task Definition Family Name: ${family_name}"
+                }
+            }
+        }
+	    
     // Run container locally and perform tests
     stage('Running tests') {
       steps{
