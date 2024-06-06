@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Define variables
-TASK_DEFINITION_NAME="NODEAPP-TASK.json"
-REPOSITORY_URI="339713041727.dkr.ecr.us-east-1.amazonaws.com/nodejs"
+TASK_DEFINITION_NAME="TASK-DEFINITION-NODEAPP"
+REPOSITORY_URI="975050290535.dkr.ecr.us-east-1.amazonaws.com/nodejs:latest"
 IMAGE_TAG="latest"
-CLUSTER_NAME="nodeapp-cluster"
+CLUSTER_NAME="node-cluster"
 SERVICE_NAME="nodeapp-service-new"
 DESIRED_COUNT=1
 
