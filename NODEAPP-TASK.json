@@ -1,0 +1,23 @@
+{
+    "family": NODEAPP-TASK,
+    "containerDefinitions": [
+        {
+            "image": "REPOSITORY_URI:BUILD_NUMBER",
+            "name": nodejs,
+	    "essential": true,
+            "portMappings": [
+                {
+                    "containerPort": 0,
+                    "hostPort": 3000
+                }
+            ]
+        }
+    ],
+    "cpu": "1025",
+    "memory": "1024",
+    "requiresCompatibilities": [
+             "EC2"
+    ],
+    "networkMode": "bridge",
+    "executionRoleArn": "arn:aws:iam::339713041727:role/ecsTaskExecutionRole" 
+}
