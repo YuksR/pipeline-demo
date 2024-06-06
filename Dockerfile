@@ -11,7 +11,7 @@ WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
 
 # Copy package.json and package-lock.json in the image
-COPY package.json package-lock.json ./
+COPY package.json ./
 
 # Run npm install command
 RUN npm install
