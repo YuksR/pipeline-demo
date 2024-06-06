@@ -1,5 +1,5 @@
 {
-    "family": NODEAPP-TASK,
+    "family": "NODEAPP-TASK",
     "containerDefinitions": [
         {
             "image": "REPOSITORY_URI:BUILD_NUMBER",
