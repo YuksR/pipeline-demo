@@ -1,21 +1,37 @@
-ROLE_ARN=`aws ecs describe-task-definition --task-definition "${TASK_DEFINITION_NAME}" --region "${AWS_DEFAULT_REGION}" | jq .taskDefinition.executionRoleArn`
-echo "ROLE_ARN= " $ROLE_ARN
+#!/bin/bash
 
-FAMILY=`aws ecs describe-task-definition --task-definition "${TASK_DEFINITION_NAME}" --region "${AWS_DEFAULT_REGION}" | jq .taskDefinition.family`
-echo "FAMILY= " $FAMILY
+# Fetch existing task definition
+task_definition=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_NAME)
 
-NAME=`aws ecs describe-task-definition --task-definition "${TASK_DEFINITION_NAME}" --region "${AWS_DEFAULT_REGION}" | jq .taskDefinition.containerDefinitions[].name`
-echo "NAME= " $NAME
+# Extract Role ARN, Family, and Name using jq
+ROLE_ARN=$(echo $task_definition | jq -r '.taskDefinition.executionRoleArn')
+FAMILY=$(echo $task_definition | jq -r '.taskDefinition.family')
+NAME=$(echo $task_definition | jq -r '.taskDefinition.containerDefinitions[0].name')
 
-sed -i "s#BUILD_NUMBER#$IMAGE_TAG#g" NODEAPP-TASK.json
-sed -i "s#REPOSITORY_URI#$REPOSITORY_URI#g" NODEAPP-TASK.json
-sed -i "s#ROLE_ARN#$ROLE_ARN#g" NODEAPP-TASK.json
-sed -i "s#FAMILY#$FAMILY#g" NODEAPP-TASK.json
-sed -i "s#NAME#$NAME#g" NODEAPP-TASK.json
+# Register new task definition
+aws ecs register-task-definition \
+    --family $FAMILY \
+    --container-definitions "[{
+        \"name\": \"$NAME\",
+        \"image\": \"$REPOSITORY_URI:$IMAGE_TAG\",
+        \"essential\": true,
+        \"portMappings\": [{
+            \"containerPort\": 3000,
+            \"hostPort\": 0
+        }]
+    }]" \
+    --cpu "1024" \
+    --memory "1024" \
+    --network-mode "bridge" \
+    --execution-role-arn $ROLE_ARN \
+    --requires-compatibilities "EC2"
 
+# Get the new task definition revision
+REVISION=$(aws ecs describe-task-definition --task-definition $FAMILY | jq -r '.taskDefinition.revision')
 
-aws ecs register-task-definition --cli-input-json file://NODEAPP-TASK.json --region="${AWS_DEFAULT_REGION}"
-
-REVISION=`aws ecs describe-task-definition --task-definition "${TASK_DEFINITION_NAME}" --region "${AWS_DEFAULT_REGION}" | jq .taskDefinition.revision`
-echo "REVISION= " "${REVISION}"
-aws ecs update-service --cluster "${CLUSTER_NAME}" --service "${SERVICE_NAME}" --task-definition "${TASK_DEFINITION_NAME}":"${REVISION}" --desired-count "${DESIRED_COUNT}"
+# Update service to use the new task definition revision
+aws ecs update-service \
+    --cluster $CLUSTER_NAME \
+    --service $SERVICE_NAME \
+    --task-definition "$FAMILY:$REVISION" \
+    --desired-count $DESIRED_COUNT
